@@ -30,6 +30,8 @@
 ReasoningV-analog-optimization/
 ├── README.md                           # 项目说明文档
 ├── results/                            # 优化结果文件
+│   ├── reasoningv_baseline_results.json                  # 优化前基线结果（所有任务使用标准配置）
+│   ├── reasoningv_before_after_comparison_results.json  # 第一次优化前后对比结果
 │   ├── reasoningv_latest_optimization_results.json      # 最新优化配置（LDO, Comparator, Caption）
 │   ├── reasoningv_tqa_pattern_optimization_results.json # TQA多策略优化配置
 │   └── tqa_optimized_error_difficulty_REAL_results.json # TQA真实测试结果
@@ -166,7 +168,9 @@ python ReasoningV完整验证测试.py <model_path>
 
 ## 📚 详细文档
 
+- **[两次优化完整总结.md](docs/两次优化完整总结.md)**: ⭐ **推荐阅读** - 完整的两次优化历程总结，包含基线、第一次优化、第二次优化的详细对比和实际案例
 - **[优化总结.md](docs/优化总结.md)**: 完整的优化总结报告，包含所有优化策略的详细说明
+- **[优化前后实际案例对比.md](docs/优化前后实际案例对比.md)**: 通过实际题目示例展示优化前后的对比效果
 - **[错误类型与优化策略关系详解.md](docs/错误类型与优化策略关系详解.md)**: 错误模式分析与针对性策略设计
 - **[TQA优化后错误难度分布真实结果报告.md](docs/TQA优化后错误难度分布真实结果报告.md)**: TQA任务错误分布分析
 - **[优化原理与示例详解.md](docs/优化原理与示例详解.md)**: 优化原理与具体示例
