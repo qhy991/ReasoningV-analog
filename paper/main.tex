@@ -29,7 +29,7 @@ Analog Circuit Design, Large Language Models, Prompt Engineering, AMSBench, In-C
 \end{IEEEkeywords}
 
 \section{Introduction}
-The automation of analog circuit design has long been a "holy grail" in the EDA industry. While digital design flows are highly automated, analog design remains heavily dependent on human intuition and expertise. Recently, Large Language Models (LLMs) have been explored as potential assistants for this task \cite{chipnemo, verigen}.
+The automation of analog circuit design has long been a ``holy grail'' in the EDA industry. While digital design flows are highly automated, analog design remains heavily dependent on human intuition and expertise. Recently, Large Language Models (LLMs) have been explored as potential assistants for this task \cite{chipnemo, verigen}.
 
 Prior work, such as AnalogSeeker \cite{analogseeker}, posits that general LLMs lack the specific knowledge required for analog circuits and thus require extensive fine-tuning on domain-specific datasets. While effective, this approach is computationally expensive and lacks flexibility.
 
@@ -79,11 +79,11 @@ For structural analysis tasks (LDO, Comparator, Caption), we observed that zero-
 The expert instruction for LDO, for example, guides the model to check: (1) Pass transistor with source fixed at VDD, (2) Error amplifier comparing VREF with feedback, (3) Stable bandgap reference, and (4) Resistive divider feedback network.
 
 \subsubsection{Multi-Strategy Optimization for TQA}
-For the Text Question Answering (TQA) task, a "one-size-fits-all" prompt proved insufficient. We categorized questions based on error patterns and applied distinct strategies:
+For the Text Question Answering (TQA) task, a ``one-size-fits-all'' prompt proved insufficient. We categorized questions based on error patterns and applied distinct strategies:
 \begin{itemize}
-    \item \textbf{Precise Strategy}: "Answer precisely..." for factual questions.
-    \item \textbf{Analytical Strategy}: "Analyze carefully..." for reasoning-heavy questions.
-    \item \textbf{Expert Strategy}: "Circuit Expert..." for deep domain knowledge.
+    \item \textbf{Precise Strategy}: ``Answer precisely...'' for factual questions.
+    \item \textbf{Analytical Strategy}: ``Analyze carefully...'' for reasoning-heavy questions.
+    \item \textbf{Expert Strategy}: ``Circuit Expert...'' for deep domain knowledge.
 \end{itemize}
 This mapping was derived from an analysis of error patterns in the validation set, where we identified specific question indices that benefited from different reasoning approaches. Figure \ref{fig:strategy} illustrates the strategy selection process.
 
@@ -181,7 +181,7 @@ For the TQA task, we identified that different questions require different reaso
 
 \vspace{10pt}
 
-The strategy selection is based on error pattern analysis. For instance, if a question was consistently answered incorrectly with the baseline prompt (e.g., model chose A when correct answer was C), we applied the "Analytical" strategy to encourage deeper reasoning. This adaptive approach improved TQA accuracy from 85.0\% (baseline) to 93.32\%.
+The strategy selection is based on error pattern analysis. For instance, if a question was consistently answered incorrectly with the baseline prompt (e.g., model chose A when correct answer was C), we applied the ``Analytical'' strategy to encourage deeper reasoning. This adaptive approach improved TQA accuracy from 85.0\% (baseline) to 93.32\%.
 
 \section{Experiments}
 
@@ -231,7 +231,7 @@ To illustrate the effectiveness of our optimization strategies, we present concr
 \subsection{Case Study 1: LDO Task}
 
 \subsubsection{Question}
-\textit{"What is the primary function of the pass transistor in an LDO regulator?"}
+\textit{``What is the primary function of the pass transistor in an LDO regulator?''}
 
 \textbf{Options:}
 \begin{itemize}
@@ -296,7 +296,7 @@ Answer:
 \subsection{Case Study 2: TQA Multi-Strategy}
 
 \subsubsection{Question}
-\textit{"How does the source–bulk voltage ($\nu_{SB}$) affect the threshold voltage ($V_T$) in an n-channel enhancement MOSFET?"}
+\textit{``How does the source--bulk voltage ($\nu_{SB}$) affect the threshold voltage ($V_T$) in an n-channel enhancement MOSFET?''}
 
 \textbf{Options:}
 \begin{itemize}
@@ -355,7 +355,7 @@ TQA & 85.0\% & 93.32\% & +9.8\% \\
 \section{Discussion}
 
 \subsection{Training-Free Adaptation}
-The success of this "training-free" approach suggests that the knowledge required for analog circuit design is already present in high-quality reasoning models. The challenge lies in \textit{activation} rather than \textit{acquisition}. Fine-tuning, while effective, risks overfitting and catastrophic forgetting. Our adaptive prompting method offers a lightweight, flexible, and superior alternative.
+The success of this ``training-free'' approach suggests that the knowledge required for analog circuit design is already present in high-quality reasoning models. The challenge lies in \textit{activation} rather than \textit{acquisition}. Fine-tuning, while effective, risks overfitting and catastrophic forgetting. Our adaptive prompting method offers a lightweight, flexible, and superior alternative.
 
 Figure \ref{fig:tqa_errors} illustrates the effectiveness of our multi-strategy optimization on the TQA task. The error rate was reduced from 14.96\% to 6.68\%, with particularly strong improvements in Graduate-level (15\% → 3.88\%) and Undergraduate-level (15\% → 4.94\%) questions. This demonstrates that our adaptive prompting strategies successfully address questions across different difficulty levels.
 
