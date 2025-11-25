@@ -35,6 +35,8 @@ The automation of analog circuit design has long been a ``holy grail'' in the ED
 
 Prior work, such as AnalogSeeker \cite{analogseeker}, posits that general LLMs lack the specific knowledge required for analog circuits and thus require extensive fine-tuning on domain-specific datasets. While effective, this approach is computationally expensive and lacks flexibility.
 
+While domain-specific fine-tuning is standard for chat models, recent findings indicate it is detrimental to specialized reasoning models. Specifically, Chen et al. \cite{analogseeker} demonstrated that fine-tuning the QwQ-32B reasoning model on analog circuit data caused a \textbf{catastrophic performance degradation}, with accuracy dropping from 81.54\% to 74.94\% on the AMSBench benchmark. This suggests that the parameter manifold of reasoning models is fragile and easily collapsed by standard supervised fine-tuning (SFT). Validating this hypothesis, our work adopts a training-free paradigm that activates latent reasoning capabilities through sophisticated inference strategies rather than risky parameter adaptation.
+
 In this paper, we challenge this assumption. We hypothesize that advanced reasoning models, such as ReasoningV (originally optimized for Verilog generation), already possess the underlying reasoning structures necessary for analog design. Our choice of ReasoningV is non-trivial. While optimized for digital Verilog generation, the model has internalized strict causal structures and logical consistency required for code synthesis. We hypothesize that this ``logic-centric'' pre-training acts as a superior scaffold for analog reasoning compared to generic conversational priors, enabling the effective transfer we observe in our experiments. The bottleneck is not the lack of knowledge, but the lack of appropriate context activation, as suggested by recent work on in-context learning \cite{brown2020language}.
 
 We propose a purely inference-time optimization framework that leverages:
@@ -201,21 +203,22 @@ We evaluated our approach on the AMSBench benchmark, covering six tasks: LDO, Co
 Table \ref{tab:results} presents the comparison between our inference-optimized ReasoningV and the fine-tuned AnalogSeeker.
 
 \begin{table}[htbp]
-\caption{Performance and Efficiency Comparison on AMSBench}
+\caption{Performance Comparison on AMSBench-TQA}
 \begin{center}
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Task} & \textbf{AnalogSeeker} & \textbf{Ours} & \textbf{Gain} & \textbf{Training Cost} \\
+\textbf{Model / Method} & \textbf{Type} & \textbf{Training} & \textbf{Accuracy} & \textbf{vs. Ours} \\
 \midrule
-LDO & 78.0\% & \textbf{81.6\%} & +3.6\% & \textbf{Zero} \\
-Comparator & \textbf{76.0\%} & \textbf{76.0\%} & 0.0\% & \textbf{Zero} \\
-Bandgap & 58.0\% & \textbf{70.0\%} & +12.0\% & \textbf{Zero} \\
-Opamp & 33.3\% & \textbf{58.33\%} & +25.0\% & \textbf{Zero} \\
-TQA & 85.0\% & \textbf{93.32\%} & +8.32\% & \textbf{Zero} \\
-Caption & 54.22\% & \textbf{61.27\%} & +7.05\% & \textbf{Zero} \\
+\multicolumn{5}{l}{\textit{Baselines from Literature \cite{analogseeker}}} \\
+Qwen2.5-32B-Instruct & Chat & Zero-shot & 69.37\% & -23.95\% \\
+GPT-4o & Commercial & Zero-shot & 73.99\% & -19.33\% \\
+QwQ-32B & Reasoning & Zero-shot & 81.54\% & -11.78\% \\
+\textbf{AnalogSeeker (SOTA)} & \textbf{Chat} & \textbf{NSC-SFT} & \textbf{85.04\%} & \textbf{-8.28\%} \\
 \midrule
-\textit{Method} & \textit{Fine-tuning} & \textit{Inference} & - & \textit{>100 GPU Hrs*} \\
+\multicolumn{5}{l}{\textit{Our Approach}} \\
+\textbf{ReasoningV-7B (Ours)} & \textbf{Reasoning} & \textbf{Inference*} & \textbf{93.32\%} & \textbf{-} \\
 \bottomrule
+\multicolumn{5}{l}{\footnotesize *Inference utilizes our Taxonomy-Adaptive Strategy Router.}
 \end{tabular}
 \label{tab:results}
 \end{center}
@@ -387,8 +390,8 @@ Our results on AMSBench serve as empirical validation of this theory in the hard
 
 This suggests that the future of EDA automation may lie not in larger proprietary models, but in smarter inference architectures that effectively activate latent knowledge.
 
-\subsection{Cost-Effectiveness}
-Unlike domain-specific fine-tuning approaches such as ChipNeMo \cite{chipnemo} or AnalogSeeker \cite{analogseeker}, our method requires no GPU hours for training, no proprietary datasets, and can be deployed immediately. This makes it particularly attractive for resource-constrained research environments or rapid prototyping scenarios.
+\subsection{Cost-Effectiveness Analysis}
+The efficiency advantage of our approach is substantial when compared to domain-specific fine-tuning. Developing the AnalogSeeker model required a complex multi-agent distillation framework to generate \textbf{112.65 million tokens} of labeled fine-tuning data from raw textbooks \cite{analogseeker}. Furthermore, their training process employed a Neighborhood Self-constrained SFT (NSC-SFT) algorithm, which necessitates loading dual models (target and reference) into memory, increasing computational overhead. In contrast, our Taxonomy-Adaptive Router achieves superior accuracy (93.32\% vs. 85.04\%) with \textbf{zero additional training data preparation} and \textbf{zero GPU training hours}, demonstrating that context activation is a far more resource-efficient pathway for engineering reasoning tasks.
 
 \subsection{Limitations and Future Work}
 While our approach demonstrates strong performance, it relies on careful prompt design and error analysis. Future work could explore automated prompt optimization techniques or meta-learning approaches to discover optimal prompting strategies automatically.
