@@ -12,10 +12,12 @@
 
 \title{Training-Free Analog Circuit Design: Unlocking Latent Reasoning Capabilities in Logic-Optimized LLMs}
 
-\author{\IEEEauthorblockN{Gengfei Li}
-\IEEEauthorblockA{\textit{Dept. of Microelectronics} \\
-\textit{Shanghai Jiao Tong University}\\
-Shanghai, China}
+\author{\IEEEauthorblockN{Haiyan Qin\IEEEauthorrefmark{1}, Gengfei Li\IEEEauthorrefmark{1}, and Wang Kang\IEEEauthorrefmark{2}}
+\IEEEauthorblockA{\textit{National Key Laboratory of Spintronics, Hangzhou International Innovation Institute} \\
+\textit{School of Integrated Circuit Science and Engineering, Beihang University, China} \\
+Email: haiyanq@buaa.edu.cn, ligengfei@buaa.edu.cn, wang.kang@buaa.edu.cn}
+\thanks{\IEEEauthorrefmark{1}Co-first authors.}
+\thanks{\IEEEauthorrefmark{2}Corresponding author.}
 }
 
 \maketitle
@@ -363,7 +365,7 @@ TQA & 85.0\% & 93.32\% & +9.8\% \\
 \section{Discussion}
 
 \subsection{Training-Free Adaptation}
-The success of this ``training-free'' approach suggests that the knowledge required for analog circuit design is already present in high-quality reasoning models. The challenge lies in \textit{activation} rather than \textit{acquisition}. Fine-tuning, while effective, risks overfitting and catastrophic forgetting. Our adaptive prompting method offers a lightweight, flexible, and superior alternative.
+The success of this ``training-free'' approach suggests that the knowledge required for analog circuit design is already present in high-quality reasoning models. This aligns with recent industrial observations, such as Anthropic's ``Skills'' framework \cite{anthropic2025frontend}, where injecting structured domain expertise (e.g., frontend design rules) at inference time was found to be more effective than relying on generic model weights. The challenge lies in \textit{activation} rather than \textit{acquisition}. Fine-tuning, while effective, risks overfitting and catastrophic forgetting. Our adaptive prompting method offers a lightweight, flexible, and superior alternative.
 
 Figure \ref{fig:tqa_errors} illustrates the effectiveness of our multi-strategy optimization on the TQA task. The error rate was reduced from 14.96\% to 6.68\%, with particularly strong improvements in Graduate-level (15\% → 3.88\%) and Undergraduate-level (15\% → 4.94\%) questions. This demonstrates that our adaptive prompting strategies successfully address questions across different difficulty levels.
 
@@ -372,6 +374,18 @@ Figure \ref{fig:tqa_errors} illustrates the effectiveness of our multi-strategy 
 \caption{TQA error distribution by difficulty level before and after multi-strategy optimization. The overall error rate was reduced by 55.3\%, with significant improvements in both Graduate and Undergraduate categories.}
 \label{fig:tqa_errors}
 \end{figure}
+
+\subsection{Alignment with Efficient AI Paradigms}
+
+Our ``training-free'' methodology aligns with broader trends in efficient AI research. While traditional EDA approaches prioritize domain-specific fine-tuning \cite{analogseeker}, recent work from Google DeepMind \cite{deepmind_test_time} demonstrates that scaling \textit{test-time compute}---the computational effort expended during inference---can outperform parameter scaling.
+
+Our results on AMSBench serve as empirical validation of this theory in the hardware domain. Specifically:
+\begin{itemize}
+    \item Our \textbf{Expert-Guided Prompting} mirrors the clinical instruction tuning strategies used in Med-PaLM \cite{medpalm} to enforce domain rigor.
+    \item Our \textbf{Semantic Router} implements a lightweight reasoning-action loop, conceptually similar to the ReAct framework \cite{react}, allowing the model to dynamically adapt its ``thinking process'' to the circuit topology.
+\end{itemize}
+
+This suggests that the future of EDA automation may lie not in larger proprietary models, but in smarter inference architectures that effectively activate latent knowledge.
 
 \subsection{Cost-Effectiveness}
 Unlike domain-specific fine-tuning approaches such as ChipNeMo \cite{chipnemo} or AnalogSeeker \cite{analogseeker}, our method requires no GPU hours for training, no proprietary datasets, and can be deployed immediately. This makes it particularly attractive for resource-constrained research environments or rapid prototyping scenarios.
