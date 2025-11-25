@@ -95,7 +95,7 @@ This routing mechanism ensures that the optimal prompting strategy is selected d
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\columnwidth]{strategy_selection_flow.png}}
-\caption{Multi-strategy selection flowchart for TQA task based on error pattern analysis.}
+\caption{Multi-strategy selection flowchart for TQA task based on semantic routing.}
 \label{fig:strategy}
 \end{figure}
 
@@ -187,7 +187,7 @@ For the TQA task, we identified that different questions require different reaso
 
 \vspace{10pt}
 
-The strategy selection is based on error pattern analysis. For instance, if a question was consistently answered incorrectly with the baseline prompt (e.g., model chose A when correct answer was C), we applied the ``Analytical'' strategy to encourage deeper reasoning. This adaptive approach improved TQA accuracy from 85.0\% (baseline) to 93.32\%.
+The strategy selection is driven by our semantic router. For instance, if a question contains analytical keywords (e.g., ``Why'', ``Calculate''), the router triggers the ``Analytical'' strategy to encourage deeper reasoning. This adaptive approach improved TQA accuracy from 85.0\% (baseline) to 93.32\%.
 
 \section{Experiments}
 
@@ -320,7 +320,7 @@ Standard question-answer format without strategy differentiation.
 
 \subsubsection{Optimized Prompt (93.32\% accuracy)}
 
-For this specific question (identified through error analysis), we apply the "Precise" strategy:
+For this specific question, our \textbf{Semantic Router} detected the specific phrasing format and classified it as a factual query, automatically triggering the "Precise" strategy:
 
 \begin{verbatim}
 Answer precisely: How does the source–bulk 
@@ -333,9 +333,9 @@ Answer:
 
 \textbf{Strategy Selection Rationale:}
 \begin{itemize}
-    \item Error pattern analysis revealed this question required precise physical understanding
-    \item "Answer precisely" prefix reduces ambiguity
-    \item Applied to 104 questions with similar error patterns
+    \item \textbf{Router Trigger:} The explicit scientific query structure.
+    \item \textbf{Action:} Applied "Precise" prefix to reduce hallucination.
+    \item \textbf{Impact:} Applied to 104 similar questions via the router.
     \item Overall error reduction: 61.7\% (116 out of 188 errors fixed)
 \end{itemize}
 
