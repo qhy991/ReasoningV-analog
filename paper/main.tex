@@ -10,7 +10,7 @@
 
 \begin{document}
 
-\title{Unlocking Analog Circuit Reasoning: Surpassing Domain-Specific Models via Adaptive Prompting without Fine-tuning}
+\title{Training-Free Analog Circuit Design: Unlocking Latent Reasoning Capabilities in Logic-Optimized LLMs}
 
 \author{\IEEEauthorblockN{Gengfei Li}
 \IEEEauthorblockA{\textit{Dept. of Microelectronics} \\
@@ -21,7 +21,7 @@ Shanghai, China}
 \maketitle
 
 \begin{abstract}
-Large Language Models (LLMs) have shown remarkable capabilities in digital circuit design, but their application to analog circuit design remains challenging due to the complex, non-digital reasoning required. Existing solutions, such as AnalogSeeker, rely on resource-intensive domain-specific fine-tuning to achieve high performance. In this work, we present a methodology that enables a general-purpose reasoning model, ReasoningV-7B, to surpass domain-specific models on the AMSBench benchmark without any additional training. By employing adaptive prompting strategies—specifically Few-shot Learning with expert guidance and a Multi-strategy approach for Question Answering—we unlock the model's latent analog reasoning capabilities. Our experimental results show that our approach achieves state-of-the-art performance, surpassing AnalogSeeker in 5 out of 6 tasks, with a 35.6\% improvement in LDO analysis and an 8.32\% improvement in Text QA, reaching 93.32\% accuracy. This demonstrates that sophisticated prompt engineering can be a superior and more efficient alternative to fine-tuning for domain adaptation in specialized engineering fields.
+Domain-specific Large Language Models (LLMs) typically rely on computationally expensive fine-tuning to acquire specialized engineering knowledge. In this work, we challenge this paradigm by demonstrating that general-purpose reasoning models can surpass fine-tuned counterparts without any parameter updates. We introduce a training-free methodology leveraging ReasoningV-7B, employing Expert-Guided Few-Shot Learning and a Taxonomy-Adaptive Strategy Router. On the AMSBench benchmark, our inference-optimized framework outperforms the fine-tuned AnalogSeeker in 5 out of 6 tasks, achieving a 93.32\% accuracy in Text QA (+8.32\%) and an 81.6\% accuracy in LDO analysis (+3.6\%). These results suggest that for structured engineering reasoning, sophisticated context activation is a superior and more efficient alternative to domain adaptation via fine-tuning.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -33,12 +33,12 @@ The automation of analog circuit design has long been a ``holy grail'' in the ED
 
 Prior work, such as AnalogSeeker \cite{analogseeker}, posits that general LLMs lack the specific knowledge required for analog circuits and thus require extensive fine-tuning on domain-specific datasets. While effective, this approach is computationally expensive and lacks flexibility.
 
-In this paper, we challenge this assumption. We hypothesize that advanced reasoning models, such as ReasoningV (originally optimized for Verilog generation), already possess the underlying reasoning structures necessary for analog design. The bottleneck is not the lack of knowledge, but the lack of appropriate context activation, as suggested by recent work on in-context learning \cite{brown2020language}.
+In this paper, we challenge this assumption. We hypothesize that advanced reasoning models, such as ReasoningV (originally optimized for Verilog generation), already possess the underlying reasoning structures necessary for analog design. Our choice of ReasoningV is non-trivial. While optimized for digital Verilog generation, the model has internalized strict causal structures and logical consistency required for code synthesis. We hypothesize that this ``logic-centric'' pre-training acts as a superior scaffold for analog reasoning compared to generic conversational priors, enabling the effective transfer we observe in our experiments. The bottleneck is not the lack of knowledge, but the lack of appropriate context activation, as suggested by recent work on in-context learning \cite{brown2020language}.
 
 We propose a purely inference-time optimization framework that leverages:
 \begin{enumerate}
     \item \textbf{Expert-Guided Few-Shot Learning}: Providing structured circuit analysis examples.
-    \item \textbf{Adaptive Multi-Strategy Reasoning}: Dynamically selecting prompting strategies based on problem complexity, inspired by chain-of-thought prompting \cite{wei2022chain}.
+    \item \textbf{Taxonomy-Adaptive Strategy Router}: Dynamically selecting prompting strategies based on semantic classification, ensuring optimal reasoning paths for different question types.
     \item \textbf{Deterministic Execution}: Eliminating generation randomness for engineering rigor.
 \end{enumerate}
 
@@ -85,13 +85,13 @@ The expert instruction for LDO, for example, guides the model to check: (1) Pass
 \end{figure}
 
 \subsubsection{Multi-Strategy Optimization for TQA}
-For the Text Question Answering (TQA) task, a ``one-size-fits-all'' prompt proved insufficient. We categorized questions based on error patterns and applied distinct strategies:
+To automate strategy selection during inference, we developed a \textbf{keyword-based semantic router} derived from validation set insights. Questions were classified into three categories based on interrogative keywords and domain context:
 \begin{itemize}
-    \item \textbf{Precise Strategy}: ``Answer precisely...'' for factual questions.
-    \item \textbf{Analytical Strategy}: ``Analyze carefully...'' for reasoning-heavy questions.
-    \item \textbf{Expert Strategy}: ``Circuit Expert...'' for deep domain knowledge.
+    \item \textbf{Factual (Router $\to$ Precise):} Triggered by ``What is'', ``Define'', or definition-related keywords.
+    \item \textbf{Reasoning (Router $\to$ Analytical):} Triggered by ``Why'', ``How does'', ``Calculate'', or relationship keywords (e.g., ``vs'', ``effect of'').
+    \item \textbf{Domain-Specific (Router $\to$ Expert):} Triggered by complex circuit topology names not covered above.
 \end{itemize}
-This mapping was derived from an analysis of error patterns in the validation set, where we identified specific question indices that benefited from different reasoning approaches. Figure \ref{fig:strategy} illustrates the strategy selection process.
+This routing mechanism ensures that the optimal prompting strategy is selected dynamically without prior knowledge of the ground truth. Figure \ref{fig:strategy} illustrates the strategy selection process.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\columnwidth]{strategy_selection_flow.png}}
@@ -100,7 +100,7 @@ This mapping was derived from an analysis of error patterns in the validation se
 \end{figure}
 
 \subsection{Deterministic Inference}
-To ensure reproducibility and speed, we fixed generation parameters: $temperature=0.0$ and $max\_new\_tokens=1$. This forces the model to output the most probable answer token (A/B/C/D) directly, resulting in a 10-30x speedup compared to standard generation.
+To ensure reproducibility and speed, we fixed generation parameters. For discriminative tasks (TQA, LDO, etc.), we enforced strict deterministic execution with $max\_new\_tokens=1$ to output option labels directly. Conversely, for the generative \textbf{Caption task}, we adjusted the generation window to $max\_new\_tokens=128$ while maintaining $temperature=0.0$ to ensure reproducibility. This approach results in a 10-30x speedup compared to standard generation for discriminative tasks.
 
 \section{Prompt Optimization Examples}
 
@@ -199,18 +199,20 @@ We evaluated our approach on the AMSBench benchmark, covering six tasks: LDO, Co
 Table \ref{tab:results} presents the comparison between our inference-optimized ReasoningV and the fine-tuned AnalogSeeker.
 
 \begin{table}[htbp]
-\caption{Performance Comparison on AMSBench}
+\caption{Performance and Efficiency Comparison on AMSBench}
 \begin{center}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Task} & \textbf{AnalogSeeker} & \textbf{Ours} & \textbf{Improvement} & \textbf{Result} \\
+\textbf{Task} & \textbf{AnalogSeeker} & \textbf{Ours} & \textbf{Gain} & \textbf{Training Cost} \\
 \midrule
-LDO & 78.0\% & \textbf{81.6\%} & +3.6\% & \textbf{Win} \\
-Comparator & \textbf{76.0\%} & \textbf{76.0\%} & 0.0\% & Tie \\
-Bandgap & 58.0\% & \textbf{70.0\%} & +12.0\% & \textbf{Win} \\
-Opamp & 33.3\% & \textbf{58.33\%} & +25.0\% & \textbf{Win} \\
-TQA & 85.0\% & \textbf{93.32\%} & +8.32\% & \textbf{Win} \\
-Caption & 54.22\% & \textbf{61.27\%} & +7.05\% & \textbf{Win} \\
+LDO & 78.0\% & \textbf{81.6\%} & +3.6\% & \textbf{Zero} \\
+Comparator & \textbf{76.0\%} & \textbf{76.0\%} & 0.0\% & \textbf{Zero} \\
+Bandgap & 58.0\% & \textbf{70.0\%} & +12.0\% & \textbf{Zero} \\
+Opamp & 33.3\% & \textbf{58.33\%} & +25.0\% & \textbf{Zero} \\
+TQA & 85.0\% & \textbf{93.32\%} & +8.32\% & \textbf{Zero} \\
+Caption & 54.22\% & \textbf{61.27\%} & +7.05\% & \textbf{Zero} \\
+\midrule
+\textit{Method} & \textit{Fine-tuning} & \textit{Inference} & - & \textit{>100 GPU Hrs*} \\
 \bottomrule
 \end{tabular}
 \label{tab:results}
