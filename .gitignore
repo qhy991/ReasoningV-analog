@@ -1,4 +1,5 @@
 *.pdf
+!paper/main.pdf
 *.aux
 *.log
 *.blg
