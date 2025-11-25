@@ -78,6 +78,12 @@ For structural analysis tasks (LDO, Comparator, Caption), we observed that zero-
 
 The expert instruction for LDO, for example, guides the model to check: (1) Pass transistor with source fixed at VDD, (2) Error amplifier comparing VREF with feedback, (3) Stable bandgap reference, and (4) Resistive divider feedback network.
 
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{fewshot_impact_analysis.png}}
+\caption{Impact of Few-shot learning on accuracy across different tasks. The optimal number of examples varies by task complexity, with LDO benefiting significantly from 3 examples and Caption from 8 examples.}
+\label{fig:fewshot}
+\end{figure}
+
 \subsubsection{Multi-Strategy Optimization for TQA}
 For the Text Question Answering (TQA) task, a ``one-size-fits-all'' prompt proved insufficient. We categorized questions based on error patterns and applied distinct strategies:
 \begin{itemize}
