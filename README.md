@@ -55,6 +55,25 @@ ReasoningV-analog-optimization/
 
 ## 🎯 核心优化策略
 
+### 0. Router路由机制（新增）
+
+**适用任务**: TQA（可扩展到其他任务）
+
+**原理**: 根据问题文本特征自动分类问题类型，并选择相应的优化策略
+
+**方法**: 规则映射（Rule-based Routing）
+
+**问题类型分类**:
+- **事实类 (Factual)**: "what is", "what are", "define" → `Answer precisely:`
+- **推理类 (Reasoning)**: "why", "how does", "explain" → `Analyze carefully:`
+- **计算类 (Calculation)**: "calculate", "compute", "determine" → `Calculate precisely:`
+- **分析类 (Analysis)**: "analyze", "examine", "evaluate" → `Analyze carefully:`
+- **比较类 (Comparison)**: "better", "best", "prefer" → `Compare and analyze:`
+
+**实现**: 见 `scripts/question_router.py`
+
+**效果**: TQA任务通过Router机制实现多策略混合，准确率从85.0%提升到93.32%
+
 ### 1. Few-shot 学习
 
 **适用任务**: LDO, Comparator, Caption
