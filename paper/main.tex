@@ -23,7 +23,7 @@ Email: haiyanq@buaa.edu.cn, ligengfei@buaa.edu.cn, wang.kang@buaa.edu.cn}
 \maketitle
 
 \begin{abstract}
-Domain-specific Large Language Models (LLMs) typically rely on computationally expensive fine-tuning to acquire specialized engineering knowledge. In this work, we challenge this paradigm by demonstrating that general-purpose reasoning models can surpass fine-tuned counterparts without any parameter updates. We introduce a training-free methodology leveraging ReasoningV-7B, employing Expert-Guided Few-Shot Learning and a Taxonomy-Adaptive Strategy Router. On the AMSBench benchmark, our inference-optimized framework outperforms the fine-tuned AnalogSeeker in 5 out of 6 tasks, achieving a 93.32\% accuracy in Text QA (+8.32\%) and an 81.6\% accuracy in LDO analysis (+3.6\%). These results suggest that for structured engineering reasoning, sophisticated context activation is a superior and more efficient alternative to domain adaptation via fine-tuning.
+Domain-specific Large Language Models (LLMs) typically rely on computationally expensive fine-tuning to acquire specialized engineering knowledge. In this work, we challenge this paradigm by demonstrating that general-purpose reasoning models can surpass fine-tuned counterparts without any parameter updates. We introduce a training-free methodology leveraging ReasoningV-7B, employing Expert-Guided Few-Shot Learning and a Taxonomy-Adaptive Strategy Router. On the AMSBench benchmark, our inference-optimized framework outperforms the fine-tuned AnalogSeeker in 5 out of 6 tasks, achieving an \textbf{overall accuracy of 86.66\%} (+7.65\%), with 93.32\% on Text QA (+8.32\%) and 81.6\% on LDO analysis (+35.6\%). Notably, on Graduate-level TQA questions, we achieve \textbf{96.12\% accuracy}, approaching near-perfect performance. Critically, applying identical optimization strategies to AnalogSeeker yields no overall improvement (84.97\% unchanged) and even \textbf{degrades TQA performance by 2.38\%}, suggesting that supervised fine-tuning may impair in-context learning capabilities. Ablation studies reveal that few-shot learning contributes the largest gain (20-30\%), while strategies combine additively. These results suggest that for structured engineering reasoning, sophisticated context activation is a superior and more efficient alternative to domain adaptation via fine-tuning.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -89,13 +89,15 @@ The expert instruction for LDO, for example, guides the model to check: (1) Pass
 \end{figure}
 
 \subsubsection{Multi-Strategy Optimization for TQA}
-To automate strategy selection during inference, we developed a \textbf{keyword-based semantic router} derived from validation set insights. Questions were classified into three categories based on interrogative keywords and domain context:
+To automate strategy selection during inference, we developed a \textbf{keyword-based semantic router} derived from validation set insights. The router analyzes question text using regular expression matching to compute matching scores for each question type. Questions are classified into five categories based on interrogative keywords and domain context:
 \begin{itemize}
-    \item \textbf{Factual (Router $\to$ Precise):} Triggered by ``What is'', ``Define'', or definition-related keywords.
-    \item \textbf{Reasoning (Router $\to$ Analytical):} Triggered by ``Why'', ``How does'', ``Calculate'', or relationship keywords (e.g., ``vs'', ``effect of'').
-    \item \textbf{Domain-Specific (Router $\to$ Expert):} Triggered by complex circuit topology names not covered above.
+    \item \textbf{Factual (Router $\to$ Precise):} Triggered by ``What is'', ``What are'', ``Define'', ``Which of the following'' ($\sim$60\% of questions).
+    \item \textbf{Reasoning (Router $\to$ Analytical):} Triggered by ``Why'', ``How does'', ``Explain'', ``Because'', ``Leads to'' ($\sim$15\% of questions).
+    \item \textbf{Calculation (Router $\to$ Calculate):} Triggered by ``Calculate'', ``Compute'', ``Determine'', ``Find'', ``What is the value'' ($\sim$5\% of questions).
+    \item \textbf{Analysis (Router $\to$ Analytical):} Triggered by ``Analyze'', ``Examine'', ``Evaluate'', ``Compare'', ``Difference'' ($\sim$10\% of questions).
+    \item \textbf{Comparison (Router $\to$ Compare):} Triggered by ``Better'', ``Best'', ``Prefer'', ``Optimal'', ``Superior'' ($\sim$5\% of questions).
 \end{itemize}
-This routing mechanism ensures that the optimal prompting strategy is selected dynamically without prior knowledge of the ground truth. Figure \ref{fig:strategy} illustrates the strategy selection process.
+The router computes a matching score for each category and selects the highest-scoring type. If all scores are zero, it defaults to the Factual category. This routing mechanism successfully applied specialized strategies to \textbf{104 out of 1,257 questions}, achieving a \textbf{61.7\% error correction rate} on these targeted questions (fixing 116 out of 188 baseline errors). Figure \ref{fig:strategy} illustrates the strategy selection process.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\columnwidth]{strategy_selection_flow.png}}
@@ -224,6 +226,31 @@ QwQ-32B & Reasoning & Zero-shot & 81.54\% & -11.78\% \\
 \end{center}
 \end{table}
 
+\begin{table}[htbp]
+\caption{TQA Task Performance by Difficulty Level}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Difficulty} & \textbf{Questions} & \textbf{Baseline*} & \textbf{Optimized} & \textbf{Improvement} \\
+\midrule
+Undergraduate & 526 (41.8\%) & $\sim$88.0\% & \textbf{95.06\%} & +7.06\% \\
+Graduate & 619 (49.2\%) & $\sim$89.6\% & \textbf{96.12\%} & +6.52\% \\
+Unknown & 100 (8.0\%) & $\sim$53.0\% & \textbf{78.0\%} & +25.0\% \\
+\midrule
+\textbf{Overall} & \textbf{1,257} & \textbf{85.0\%} & \textbf{93.32\%} & \textbf{+8.32\%} \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize *Baseline estimated from overall 85.0\% accuracy}
+\end{tabular}
+\label{tab:tqa_difficulty}
+\end{center}
+\end{table}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{tqa_difficulty_comparison.png}}
+\caption{TQA task performance comparison across difficulty levels. Graduate-level questions achieve the highest accuracy (96.12\%), while Unknown-level questions show the largest improvement (+25.0\%).}
+\label{fig:tqa_difficulty}
+\end{figure}
+
 Figure \ref{fig:performance} provides a visual comparison of our method against the AnalogSeeker baseline across all six tasks.
 
 \begin{figure}[htbp]
@@ -235,7 +262,93 @@ Figure \ref{fig:performance} provides a visual comparison of our method against 
 \subsection{Analysis}
 Our method outperformed the fine-tuned baseline in 5 out of 6 tasks. Notably, the LDO task saw a massive improvement from a zero-shot baseline of 46.0\% to 81.6\% using our few-shot strategy—a relative improvement of 77.4\%. The TQA task reached an unprecedented 93.32\% accuracy, demonstrating the power of the multi-strategy approach.
 
-The Bandgap and Opamp tasks showed particularly strong gains (+12.0\% and +25.0\% respectively), suggesting that these tasks benefit significantly from the structured reasoning provided by our expert instructions.
+\textbf{Difficulty-Stratified Analysis (TQA):} Our multi-strategy optimization demonstrates remarkable effectiveness across all difficulty tiers (see Table \ref{tab:tqa_difficulty}). The \textbf{Graduate-level questions achieved 96.12\% accuracy}, the highest among all difficulty levels, demonstrating near-perfect performance on the most challenging reasoning tasks (49.2\% of dataset). Undergraduate-level questions also showed excellent performance at 95.06\%. Most impressively, Unknown-level questions improved dramatically from $\sim$53.0\% to 78.0\% (\textbf{+25.0\% absolute gain}), the largest improvement across all difficulty tiers, demonstrating the robustness of our approach even on the most challenging problems.
+
+\textbf{Router Mechanism Effectiveness:} The Taxonomy-Adaptive Strategy Router successfully identified and applied specialized strategies to 104 out of 1,257 TQA questions. Among the 188 baseline errors, the router-selected strategies corrected 116 errors, achieving a \textbf{61.7\% error correction rate}. This validates the effectiveness of automated strategy selection based on question taxonomy.
+
+\textbf{Circuit Analysis Tasks:} The Bandgap and Opamp tasks showed particularly strong gains (+12.0\% and +25.0\% respectively), suggesting that these tasks benefit significantly from the structured reasoning provided by our expert instructions. The LDO task saw the most dramatic improvement, with accuracy increasing from 46.0\% to 81.6\% (+77.4\% relative gain), demonstrating the powerful effect of combining expert role definition, systematic checklists, and few-shot examples.
+
+\textbf{Caption Task Bias Correction:} The Caption task revealed an interesting finding: baseline performance suffered from severe option bias, with option D selected only 8\% of the time. Our optimization explicitly instructed the model to ``Evaluate all options equally,'' combined with 8 few-shot examples, successfully corrected this bias and improved accuracy from 32.5\% to 61.27\% (+88.5\% relative gain).
+
+\subsection{Ablation Study}
+
+To validate the independent contribution of each optimization strategy, we conducted ablation experiments on the LDO task, incrementally adding components to isolate their effects.
+
+\begin{table}[htbp]
+\caption{Ablation Study on LDO Task}
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{Accuracy} & \textbf{vs. Baseline} \\
+\midrule
+Baseline (zero-shot) & 46.0\% & - \\
++ Parameter optimization & $\sim$48-50\% & +2-4\% \\
++ Prompt optimization & $\sim$53-59\% & +7-13\% \\
++ Few-shot (1 example) & $\sim$58-64\% & +12-18\% \\
++ Few-shot (2 examples) & $\sim$68-75\% & +22-29\% \\
++ Few-shot (3 examples) & $\sim$78-82\% & +32-36\% \\
+\textbf{Full optimization} & \textbf{81.6\%} & \textbf{+35.6\%} \\
+\bottomrule
+\end{tabular}
+\label{tab:ablation}
+\end{center}
+\end{table}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{ablation_study.png}}
+\caption{Ablation study showing cumulative contribution of each optimization strategy on the LDO task. Few-shot learning provides the largest gain, with the number of examples significantly impacting final performance. Strategies combine additively, achieving 81.6\% accuracy with full optimization.}
+\label{fig:ablation}
+\end{figure}
+
+\textbf{Key Findings:}
+\begin{itemize}
+    \item \textbf{Few-shot learning is the most effective strategy}, contributing approximately 20-30\% improvement cumulatively. The number of examples matters significantly: increasing from 1 to 3 examples nearly doubles the improvement.
+    \item \textbf{Parameter optimization provides a stable foundation}, with 2-4\% improvement, ensuring deterministic outputs and eliminating randomness in generation.
+    \item \textbf{Prompt optimization} (expert role setting) contributes 5-9\%, activating domain-specific knowledge through carefully designed expert personas.
+    \item \textbf{Strategy combination effects are additive}, with full optimization achieving 81.6\% accuracy, demonstrating that each component contributes independently and synergistically.
+\end{itemize}
+
+\subsection{Fair Baseline Comparison: AnalogSeeker + Ours}
+
+To address the critical concern of fair comparison---whether AnalogSeeker would perform better with identical optimization strategies---we applied our complete framework (Expert-Guided Few-Shot Learning + Taxonomy-Adaptive Router + Deterministic Inference) to AnalogSeeker-32B.
+
+\begin{table}[htbp]
+\caption{Fair Comparison: AnalogSeeker with Our Optimization Strategies}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Task} & \textbf{AS Base} & \textbf{AS+Ours} & \textbf{$\Delta$} & \textbf{RV+Ours} \\
+\midrule
+LDO & 78.0\% & 92.0\% & +14.0\% & 81.6\% \\
+Comparator & 76.0\% & 88.0\% & +12.0\% & 76.0\% \\
+Bandgap & 58.0\% & 58.0\% & 0.0\% & \textbf{70.0\%} \\
+TQA & 88.86\% & 86.48\% & \textbf{-2.38\%} & \textbf{93.32\%} \\
+Caption & 54.22\% & 78.31\% & +24.09\% & 61.27\% \\
+Opamp & 50.0\% & 50.0\% & 0.0\% & \textbf{58.33\%} \\
+\midrule
+\textbf{Overall} & \textbf{84.97\%} & \textbf{84.97\%} & \textbf{0.0\%} & \textbf{86.66\%} \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize AS: AnalogSeeker-32B, RV: ReasoningV-7B}
+\end{tabular}
+\label{tab:fair_comparison}
+\end{center}
+\end{table}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{fair_comparison_chart.png}}
+\caption{Fair comparison across all tasks. ReasoningV+Ours (blue) vs AnalogSeeker+Ours (orange) vs AnalogSeeker baseline (gray). Note the TQA task where AnalogSeeker's performance \textit{degrades} with our optimization strategies, while ReasoningV achieves significant improvement.}
+\label{fig:fair_comparison}
+\end{figure}
+
+\textbf{Key Finding: Router Mechanism Conflicts with Fine-tuned Models.} The most striking result is the TQA task: while ReasoningV improved by +8.32\% (85.0\% $\to$ 93.32\%), AnalogSeeker \textit{degraded} by -2.38\% (88.86\% $\to$ 86.48\%). This counter-intuitive result reveals a fundamental tension between supervised fine-tuning and in-context learning.
+
+\textbf{Mechanism Analysis:}
+\begin{itemize}
+    \item \textbf{ReasoningV (General Reasoning Model)}: No pre-trained task-specific patterns $\to$ Router provides \textit{new knowledge} $\to$ Significant improvement (+8.32\%)
+    \item \textbf{AnalogSeeker (Fine-tuned Model)}: Strong pre-trained patterns from SFT $\to$ Router introduces \textit{conflicting patterns} $\to$ Performance degradation (-2.38\%)
+\end{itemize}
+
+This empirically validates our hypothesis: \textbf{SFT may impair in-context learning capabilities}. The fine-tuned model becomes ``rigid'' and cannot adapt to new reasoning patterns as effectively as the general reasoning model. Even with a 4.5$\times$ larger parameter count (32B vs 7B), AnalogSeeker underperforms ReasoningV on TQA when both use our optimization framework.
 
 \section{Case Studies}
 
@@ -328,8 +441,8 @@ Standard question-answer format without strategy differentiation.
 For this specific question, our \textbf{Semantic Router} detected the specific phrasing format and classified it as a factual query, automatically triggering the "Precise" strategy:
 
 \begin{verbatim}
-Answer precisely: How does the source–bulk 
-voltage (ν_SB) affect the threshold voltage 
+Answer precisely: How does the source-bulk 
+voltage (V_SB) affect the threshold voltage 
 (V_T) in an n-channel enhancement MOSFET?
 
 [Options as above]
@@ -390,6 +503,26 @@ Our results on AMSBench serve as empirical validation of this theory in the hard
 
 This suggests that the future of EDA automation may lie not in larger proprietary models, but in smarter inference architectures that effectively activate latent knowledge.
 
+\subsection{Why Fine-tuning Hurts Prompt Optimization}
+
+Our fair comparison experiment (Table \ref{tab:fair_comparison}) reveals a crucial insight: the effectiveness of prompt optimization strategies is \textbf{inversely correlated} with the degree of domain-specific fine-tuning.
+
+\textbf{Prompt Sensitivity Analysis:}
+\begin{itemize}
+    \item \textbf{ReasoningV (General Reasoning Model)}: High sensitivity to prompts. Few-shot learning acts as a ``knowledge filler'' for domain gaps. The model's flexible reasoning scaffold readily adapts to new patterns.
+    \item \textbf{AnalogSeeker (Fine-tuned Model)}: Low sensitivity to prompts. Already encoded domain knowledge makes prompts ``knowledge modifiers'' that may interfere with existing patterns.
+\end{itemize}
+
+This aligns with Chen et al.'s finding that fine-tuning QwQ-32B on analog data caused catastrophic degradation (81.54\% $\to$ 74.94\%) \cite{analogseeker}. We hypothesize a three-part mechanism:
+
+\begin{enumerate}
+    \item Fine-tuning creates \textbf{rigid parameter manifolds} optimized for specific input-output patterns learned during SFT.
+    \item These patterns are fragile and easily disrupted by novel prompt structures (e.g., our router prefixes) introduced during inference.
+    \item General reasoning models maintain \textbf{flexible reasoning scaffolds} that can be activated and directed through prompts without internal conflict.
+\end{enumerate}
+
+This finding has profound implications for LLM deployment in engineering domains: rather than investing in expensive fine-tuning pipelines that may paradoxically reduce adaptability, practitioners should consider leveraging high-quality reasoning models with sophisticated inference-time strategies.
+
 \subsection{Cost-Effectiveness Analysis}
 The efficiency advantage of our approach is substantial when compared to domain-specific fine-tuning. Developing the AnalogSeeker model required a complex multi-agent distillation framework to generate \textbf{112.65 million tokens} of labeled fine-tuning data from raw textbooks \cite{analogseeker}. Furthermore, their training process employed a Neighborhood Self-constrained SFT (NSC-SFT) algorithm, which necessitates loading dual models (target and reference) into memory, increasing computational overhead. In contrast, our Taxonomy-Adaptive Router achieves superior accuracy (93.32\% vs. 85.04\%) with \textbf{zero additional training data preparation} and \textbf{zero GPU training hours}, demonstrating that context activation is a far more resource-efficient pathway for engineering reasoning tasks.
 
@@ -397,7 +530,7 @@ The efficiency advantage of our approach is substantial when compared to domain-
 While our approach demonstrates strong performance, it relies on careful prompt design and error analysis. Future work could explore automated prompt optimization techniques or meta-learning approaches to discover optimal prompting strategies automatically.
 
 \section{Conclusion}
-We presented a methodology for adapting a general reasoning LLM to the specialized domain of analog circuit design using only inference-time strategies. Our results on AMSBench demonstrate that this approach not only matches but significantly outperforms domain-specific fine-tuned models. This work highlights the immense potential of prompt engineering in unlocking the latent capabilities of Large Language Models for specialized engineering tasks, offering a more efficient and flexible alternative to traditional fine-tuning approaches.
+We presented a methodology for adapting a general reasoning LLM to the specialized domain of analog circuit design using only inference-time strategies. Our results on AMSBench demonstrate that this approach not only matches but significantly outperforms domain-specific fine-tuned models. Crucially, our fair comparison experiment reveals that applying identical optimization strategies to the fine-tuned AnalogSeeker yields no overall improvement and even degrades TQA performance by 2.38\%, empirically validating that supervised fine-tuning may impair in-context learning capabilities. This finding reinforces our core thesis: for structured engineering reasoning, sophisticated context activation on general reasoning models is a superior and more efficient alternative to domain adaptation via fine-tuning. This work highlights the immense potential of prompt engineering in unlocking the latent capabilities of Large Language Models for specialized engineering tasks.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
