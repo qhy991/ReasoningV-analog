@@ -40,7 +40,7 @@ While domain-specific fine-tuning is standard for chat models, recent findings i
 
 Conventionally, analog design automation relies on models fine-tuned on circuit textbooks and domain-specific datasets. In this paper, we challenge this paradigm by exploring the transferability of logic-oriented representations. \textbf{Surprisingly}, we find that ReasoningV---a model optimized for Verilog generation with \textit{no explicit analog training}---exhibits remarkable aptitude for analog circuit reasoning. We attribute this counter-intuitive finding to the shared underlying structure between digital logic synthesis and analog topology analysis: both require manipulating abstract symbols under strict physical constraints.
 
-Our choice of ReasoningV is deliberate. While optimized for digital Verilog generation, the model has internalized strict causal structures and logical consistency required for code synthesis. We hypothesize that this ``logic-centric'' pre-training acts as a superior scaffold for analog reasoning compared to generic conversational priors.
+Our choice of ReasoningV is deliberate. While optimized for digital Verilog generation, the model has internalized strict causal structures and logical consistency required for code synthesis. Recent studies suggest that training on code instills a ``reasoning scaffold'' into LLMs that transfers to general structured tasks \cite{madaan2022language}. We hypothesize that ReasoningV's optimization for Verilog---a language describing hardware topology and causality---aligns intrinsically with the nodal analysis required in analog circuit design. This ``logic-centric'' pre-training acts as a superior scaffold for analog reasoning compared to generic conversational priors.
 
 \textbf{Code-to-Analog Transfer Hypothesis.} We posit that the reasoning structures required for hardware code generation are \textit{isomorphic} to those needed for analog circuit analysis. Specifically: (1) Verilog synthesis demands strict \textbf{causal reasoning}---understanding how signals propagate through hierarchical modules---which mirrors analyzing cascade effects in analog circuits (e.g., how an LDO's error amplifier responds to load transients). (2) Code debugging requires tracing \textbf{feedback loops} in state machines, directly analogous to analyzing negative feedback stability in amplifiers. (3) Both domains reward \textbf{systematic decomposition}: breaking complex systems into analyzable sub-blocks. This structural isomorphism explains why a Verilog-optimized model can transfer to analog reasoning without domain-specific fine-tuning.
 
@@ -75,7 +75,7 @@ Figure \ref{fig:methodology} illustrates our overall methodology framework, whic
 \end{figure}
 
 \subsection{Base Model: ReasoningV}
-We selected ReasoningV-7B as our base model not for its domain knowledge (which is digital), but for its \textbf{inference engine}. The model's pre-training on hardware description languages (HDLs) equips it with a strong prior for \textit{structured dependency analysis}---understanding how component A affects component B given condition C. We hypothesize that this capability, rather than raw domain knowledge, is the true bottleneck in analog circuit reasoning. Traditional analog LLMs acquire domain knowledge through fine-tuning but may lack the systematic reasoning structures that HDL training provides.
+We selected ReasoningV-7B as our base model not for its domain knowledge (which is digital), but for its \textbf{inference engine}. The model's pre-training on hardware description languages (HDLs) equips it with a strong prior for \textit{structured dependency analysis}---understanding how component A affects component B given condition C. We hypothesize that this capability, rather than raw domain knowledge, is the true bottleneck in analog circuit reasoning. While SFT aligns models for conversational fluency, it often incurs an ``alignment tax'' that degrades pure reasoning capabilities \cite{ouyang2022training}. Traditional analog LLMs acquire domain knowledge through fine-tuning but may lack the systematic reasoning structures that HDL training provides. By using a base reasoning model without aggressive domain-specific SFT, we avoid this degradation and retain the model's latent logical adaptability.
 
 \subsection{Adaptive Prompting Strategies}
 
@@ -87,7 +87,7 @@ For structural analysis tasks (LDO, Comparator, Caption), we observed that zero-
     \item \textbf{Caption Task}: $N=8$. Evaluating descriptions of circuit schematics.
 \end{itemize}
 
-The expert instruction for LDO, for example, guides the model to check: (1) Pass transistor with source fixed at VDD, (2) Error amplifier comparing VREF with feedback, (3) Stable bandgap reference, and (4) Resistive divider feedback network.
+The expert instruction for LDO, for example, guides the model to check: (1) Pass transistor with source fixed at VDD, (2) Error amplifier comparing VREF with feedback, (3) Stable bandgap reference, and (4) Resistive divider feedback network. For complex circuits like LDOs, outcome supervision alone is insufficient. We employ a step-by-step verification strategy \cite{lightman2023lets} via expert checklists, forcing the model to validate intermediate circuit states before concluding.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\columnwidth]{fewshot_impact_analysis.png}}
@@ -520,12 +520,12 @@ Figure \ref{fig:tqa_errors} illustrates the effectiveness of our multi-strategy 
 
 \subsection{Alignment with Efficient AI Paradigms}
 
-Our ``training-free'' methodology aligns with broader trends in efficient AI research. While traditional EDA approaches prioritize domain-specific fine-tuning \cite{analogseeker}, recent work from Google DeepMind \cite{deepmind_test_time} demonstrates that scaling \textit{test-time compute}---the computational effort expended during inference---can outperform parameter scaling.
+Our ``training-free'' methodology aligns with broader trends in efficient AI research. While traditional EDA approaches prioritize domain-specific fine-tuning \cite{analogseeker}, recent work from Google DeepMind \cite{deepmind_test_time} demonstrates that scaling \textit{test-time compute}---the computational effort expended during inference---can outperform parameter scaling. Our results empirically validate this ``test-time compute'' paradigm in the EDA domain: sophisticated inference strategies (e.g., dynamic routing, expert prompting) outweigh the benefits of expensive parameter updates via fine-tuning.
 
 Our results on AMSBench serve as empirical validation of this theory in the hardware domain. Specifically:
 \begin{itemize}
     \item Our \textbf{Expert-Guided Prompting} mirrors the clinical instruction tuning strategies used in Med-PaLM \cite{medpalm} to enforce domain rigor.
-    \item Our \textbf{Semantic Router} implements a lightweight reasoning-action loop, conceptually similar to the ReAct framework \cite{react}, allowing the model to dynamically adapt its ``thinking process'' to the circuit topology.
+    \item Our \textbf{Semantic Router} implements a lightweight reasoning-action loop, conceptually similar to the ReAct framework \cite{react}, allowing the model to dynamically adapt its ``thinking process'' to the circuit topology. Inspired by the Tree of Thoughts framework \cite{yao2023tree}, our Taxonomy-Adaptive Router dynamically selects the optimal reasoning path (e.g., Analytical vs. Factual) based on problem structure, rather than relying on a single generic prompt.
 \end{itemize}
 
 This suggests that the future of EDA automation may lie not in larger proprietary models, but in smarter inference architectures that effectively activate latent knowledge.
@@ -540,7 +540,7 @@ Our fair comparison experiment (Table \ref{tab:fair_comparison}) reveals a cruci
     \item \textbf{AnalogSeeker (Fine-tuned Model)}: Low sensitivity to prompts. Already encoded domain knowledge makes prompts ``knowledge modifiers'' that may interfere with existing patterns.
 \end{itemize}
 
-This aligns with Chen et al.'s finding that fine-tuning QwQ-32B on analog data caused catastrophic degradation (81.54\% $\to$ 74.94\%) \cite{analogseeker}. We hypothesize a three-part mechanism:
+This aligns with Chen et al.'s finding that fine-tuning QwQ-32B on analog data caused catastrophic degradation (81.54\% $\to$ 74.94\%) \cite{analogseeker}. From a theoretical perspective, Kumar et al. \cite{kumar2022finetuning} demonstrated that fine-tuning can distort the effective pre-trained feature manifold, leading to reduced plasticity when facing novel inference contexts. We hypothesize a three-part mechanism:
 
 \begin{enumerate}
     \item Fine-tuning creates \textbf{rigid parameter manifolds} optimized for specific input-output patterns learned during SFT.
