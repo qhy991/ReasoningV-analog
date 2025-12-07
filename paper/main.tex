@@ -7,6 +7,7 @@
 \usepackage{xcolor}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 
 \begin{document}
 
@@ -37,7 +38,11 @@ Prior work, such as AnalogSeeker \cite{analogseeker}, posits that general LLMs l
 
 While domain-specific fine-tuning is standard for chat models, recent findings indicate it is detrimental to specialized reasoning models. Specifically, Chen et al. \cite{analogseeker} demonstrated that fine-tuning the QwQ-32B reasoning model on analog circuit data caused a \textbf{catastrophic performance degradation}, with accuracy dropping from 81.54\% to 74.94\% on the AMSBench benchmark. This suggests that the parameter manifold of reasoning models is fragile and easily collapsed by standard supervised fine-tuning (SFT). Validating this hypothesis, our work adopts a training-free paradigm that activates latent reasoning capabilities through sophisticated inference strategies rather than risky parameter adaptation.
 
-In this paper, we challenge this assumption. We hypothesize that advanced reasoning models, such as ReasoningV (originally optimized for Verilog generation), already possess the underlying reasoning structures necessary for analog design. Our choice of ReasoningV is non-trivial. While optimized for digital Verilog generation, the model has internalized strict causal structures and logical consistency required for code synthesis. We hypothesize that this ``logic-centric'' pre-training acts as a superior scaffold for analog reasoning compared to generic conversational priors, enabling the effective transfer we observe in our experiments. The bottleneck is not the lack of knowledge, but the lack of appropriate context activation, as suggested by recent work on in-context learning \cite{brown2020language}.
+In this paper, we challenge this assumption. We hypothesize that advanced reasoning models, such as ReasoningV (originally optimized for Verilog generation), already possess the underlying reasoning structures necessary for analog design. Our choice of ReasoningV is non-trivial. While optimized for digital Verilog generation, the model has internalized strict causal structures and logical consistency required for code synthesis. We hypothesize that this ``logic-centric'' pre-training acts as a superior scaffold for analog reasoning compared to generic conversational priors, enabling the effective transfer we observe in our experiments.
+
+\textbf{Code-to-Analog Transfer Hypothesis.} We posit that the reasoning structures required for hardware code generation are \textit{isomorphic} to those needed for analog circuit analysis. Specifically: (1) Verilog synthesis demands strict \textbf{causal reasoning}---understanding how signals propagate through hierarchical modules---which mirrors analyzing cascade effects in analog circuits (e.g., how an LDO's error amplifier responds to load transients). (2) Code debugging requires tracing \textbf{feedback loops} in state machines, directly analogous to analyzing negative feedback stability in amplifiers. (3) Both domains reward \textbf{systematic decomposition}: breaking complex systems into analyzable sub-blocks. This structural isomorphism explains why a Verilog-optimized model can transfer to analog reasoning without domain-specific fine-tuning.
+
+The bottleneck is not the lack of knowledge, but the lack of appropriate context activation, as suggested by recent work on in-context learning \cite{brown2020language}.
 
 We propose a purely inference-time optimization framework that leverages:
 \begin{enumerate}
@@ -104,6 +109,26 @@ The router computes a matching score for each category and selects the highest-s
 \caption{Multi-strategy selection flowchart for TQA task based on semantic routing.}
 \label{fig:strategy}
 \end{figure}
+
+\begin{algorithm}[t]
+\caption{Taxonomy-Adaptive Strategy Routing}
+\label{alg:router}
+\SetAlgoLined
+\KwIn{Question $Q$, Strategy Set $\mathcal{S}=\{S_{factual}, S_{reasoning}, ...\}$}
+\KwOut{Optimized Prompt $P$}
+Initialize scores $V \leftarrow \{0, 0, 0, 0, 0\}$\;
+Define Keyword Patterns $\mathcal{K} = \{K_{factual}, K_{reasoning}, K_{calc}, K_{analysis}, K_{compare}\}$\;
+\ForEach{category $c \in \{factual, reasoning, calc, analysis, compare\}$}{
+    $V_c \leftarrow |\text{RegexMatch}(Q, K_c)|$\;
+}
+$c^* \leftarrow \arg\max_{c} V_c$\;
+\eIf{$\max(V) = 0$}{
+    $P \leftarrow \text{ApplyPrefix}(Q, S_{factual})$ \tcp*{Default fallback}
+}{
+    $P \leftarrow \text{ApplyPrefix}(Q, S_{c^*})$\;
+}
+\Return $P$\;
+\end{algorithm}
 
 \subsection{Deterministic Inference}
 To ensure reproducibility and speed, we fixed generation parameters. For discriminative tasks (TQA, LDO, etc.), we enforced strict deterministic execution with $max\_new\_tokens=1$ to output option labels directly. Conversely, for the generative \textbf{Caption task}, we adjusted the generation window to $max\_new\_tokens=128$ while maintaining $temperature=0.0$ to ensure reproducibility. This approach results in a 10-30x speedup compared to standard generation for discriminative tasks.
@@ -522,6 +547,16 @@ This aligns with Chen et al.'s finding that fine-tuning QwQ-32B on analog data c
 \end{enumerate}
 
 This finding has profound implications for LLM deployment in engineering domains: rather than investing in expensive fine-tuning pipelines that may paradoxically reduce adaptability, practitioners should consider leveraging high-quality reasoning models with sophisticated inference-time strategies.
+
+\subsection{Parametric Knowledge vs. Contextual Reasoning}
+
+Our results illuminate a fundamental trade-off in LLM engineering: \textbf{Parametric Knowledge} (encoded during fine-tuning) versus \textbf{Contextual Reasoning} (activated during inference). This framework explains the divergent behaviors of AnalogSeeker and ReasoningV.
+
+\textbf{AnalogSeeker} exemplifies the parametric approach: domain knowledge is ``baked into'' model weights through SFT on 112M tokens. This yields strong baseline performance (84.97\%) but creates \textit{knowledge rigidity}---the model struggles to adapt when inference-time prompts suggest alternative reasoning patterns. The TQA degradation (-2.38\%) demonstrates this brittleness.
+
+\textbf{ReasoningV} exemplifies the contextual approach: general reasoning capabilities remain flexible, readily shaped by prompts at inference time. This yields lower baseline performance but superior \textit{plasticity}---the model can rapidly adapt to new problem structures via few-shot examples and strategy prefixes.
+
+For engineering applications, where problems are inherently dynamic and specifications evolve, we argue that \textbf{contextual reasoning offers a strategic advantage}. A model that can adapt to novel circuit topologies or updated design rules via prompt modification is more valuable than one frozen at a training-time knowledge snapshot. Our results suggest that investing in sophisticated inference strategies may yield better returns than expensive fine-tuning cycles.
 
 \subsection{Cost-Effectiveness Analysis}
 The efficiency advantage of our approach is substantial when compared to domain-specific fine-tuning. Developing the AnalogSeeker model required a complex multi-agent distillation framework to generate \textbf{112.65 million tokens} of labeled fine-tuning data from raw textbooks \cite{analogseeker}. Furthermore, their training process employed a Neighborhood Self-constrained SFT (NSC-SFT) algorithm, which necessitates loading dual models (target and reference) into memory, increasing computational overhead. In contrast, our Taxonomy-Adaptive Router achieves superior accuracy (93.32\% vs. 85.04\%) with \textbf{zero additional training data preparation} and \textbf{zero GPU training hours}, demonstrating that context activation is a far more resource-efficient pathway for engineering reasoning tasks.
