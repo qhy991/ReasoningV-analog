@@ -36,15 +36,9 @@ The automation of analog circuit design has long been a ``holy grail'' in the ED
 
 Prior work, such as AnalogSeeker \cite{analogseeker}, posits that general LLMs lack the specific knowledge required for analog circuits and thus require extensive fine-tuning on domain-specific datasets. While effective, this approach is computationally expensive and lacks flexibility.
 
-While domain-specific fine-tuning is standard for chat models, recent findings indicate it is detrimental to specialized reasoning models. Specifically, Chen et al. \cite{analogseeker} demonstrated that fine-tuning the QwQ-32B reasoning model on analog circuit data caused a \textbf{catastrophic performance degradation}, with accuracy dropping from 81.54\% to 74.94\% on the AMSBench benchmark. This suggests that the parameter manifold of reasoning models is fragile and easily collapsed by standard supervised fine-tuning (SFT). Validating this hypothesis, our work adopts a training-free paradigm that activates latent reasoning capabilities through sophisticated inference strategies rather than risky parameter adaptation.
+Validating this hypothesis, our work adopts a training-free paradigm. Crucially, we challenge the assumption that analog expertise requires domain-specific pre-training. We hypothesize that the reasoning structures required for hardware code generation (HDLs) are \textit{isomorphic} to those needed for analog circuit analysis. Verilog synthesis demands strict causal reasoning and feedback loop analysis, which mirrors the topological dependencies in analog circuits (e.g., LDO stability analysis requires tracing signal propagation through error amplifiers and feedback networks).
 
-Conventionally, analog design automation relies on models fine-tuned on circuit textbooks and domain-specific datasets. In this paper, we challenge this paradigm by exploring the transferability of logic-oriented representations. \textbf{Surprisingly}, we find that ReasoningV---a model optimized for Verilog generation with \textit{no explicit analog training}---exhibits remarkable aptitude for analog circuit reasoning. We attribute this counter-intuitive finding to the shared underlying structure between digital logic synthesis and analog topology analysis: both require manipulating abstract symbols under strict physical constraints.
-
-Our choice of ReasoningV is deliberate. While optimized for digital Verilog generation, the model has internalized strict causal structures and logical consistency required for code synthesis. Recent studies suggest that training on code instills a ``reasoning scaffold'' into LLMs that transfers to general structured tasks \cite{madaan2022language}. We hypothesize that ReasoningV's optimization for Verilog---a language describing hardware topology and causality---aligns intrinsically with the nodal analysis required in analog circuit design. This ``logic-centric'' pre-training acts as a superior scaffold for analog reasoning compared to generic conversational priors.
-
-\textbf{Code-to-Analog Transfer Hypothesis.} We posit that the reasoning structures required for hardware code generation are \textit{isomorphic} to those needed for analog circuit analysis. Specifically: (1) Verilog synthesis demands strict \textbf{causal reasoning}---understanding how signals propagate through hierarchical modules---which mirrors analyzing cascade effects in analog circuits (e.g., how an LDO's error amplifier responds to load transients). (2) Code debugging requires tracing \textbf{feedback loops} in state machines, directly analogous to analyzing negative feedback stability in amplifiers. (3) Both domains reward \textbf{systematic decomposition}: breaking complex systems into analyzable sub-blocks. This structural isomorphism explains why a Verilog-optimized model can transfer to analog reasoning without domain-specific fine-tuning.
-
-The bottleneck is not the lack of knowledge, but the lack of appropriate context activation, as suggested by recent work on in-context learning \cite{brown2020language}.
+Guided by this \textbf{Code-to-Analog Transfer} hypothesis, we leverage ReasoningV-7B---a model optimized for Verilog generation with \textit{no explicit analog training}. \textbf{Surprisingly}, it exhibits remarkable aptitude for analog circuit reasoning. Recent studies suggest that code training instills a generalized ``reasoning scaffold'' into LLMs that transfers to structured tasks \cite{madaan2022language}. We demonstrate that activating this latent scaffold through sophisticated inference strategies is superior to both generic conversational priors and rigid fine-tuned weights. The bottleneck is not the lack of knowledge, but the lack of appropriate context activation \cite{brown2020language}.
 
 We propose a purely inference-time optimization framework that leverages:
 \begin{enumerate}
@@ -124,10 +118,10 @@ Define Keyword Patterns $\mathcal{K} = \{K_{factual}, K_{reasoning}, K_{calc}, K
     $V_c \leftarrow |\text{RegexMatch}(Q, K_c)|$\;
 }
 $c^* \leftarrow \arg\max_{c} V_c$\;
-\eIf{$\max(V) = 0$}{
-    $P \leftarrow \text{ApplyPrefix}(Q, S_{factual})$ \tcp*{Default fallback}
+\eIf{$\max(V) == 0$}{
+    $P \leftarrow S_{factual} \oplus Q$ \tcp*{Default fallback}
 }{
-    $P \leftarrow \text{ApplyPrefix}(Q, S_{c^*})$\;
+    $P \leftarrow S_{c^*} \oplus Q$ \tcp*{Concatenate strategy prefix with question}
 }
 \Return $P$\;
 \end{algorithm}
@@ -564,7 +558,13 @@ For engineering applications, where problems are inherently dynamic and specific
 
 A key question arises from our results: \textit{why does a Verilog-optimized model excel at analog tasks?} We argue that Verilog code generation implicitly teaches the model to build \textbf{mental models} of signal propagation and feedback---concepts that are isomorphic to analog circuit operation.
 
-While the underlying physics differ fundamentally (discrete switching vs. continuous voltage/current relationships), the \textbf{reasoning topology} remains consistent: ``Node A affects Node B given Condition C.'' An LDO's error amplifier responding to load transients follows the same logical structure as a Verilog module propagating signals through combinational logic.
+While the underlying physics differ fundamentally (discrete switching vs. continuous voltage/current relationships), the \textbf{reasoning topology} remains consistent: ``Node A affects Node B given Condition C.'' An LDO's error amplifier responding to load transients follows the same logical structure as a Verilog module propagating signals through combinational logic. Figure \ref{fig:isomorphism} illustrates this structural correspondence.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{structural_isomorphism.png}}
+\caption{Structural isomorphism between Verilog module hierarchy (left) and LDO circuit topology (right). Both exhibit identical reasoning patterns: signal propagation through functional blocks with feedback loops.}
+\label{fig:isomorphism}
+\end{figure}
 
 This observation suggests that ``thinking in hardware code'' may be a more effective cognitive bridge to analog design than ``thinking in natural language.'' Natural language models learn correlations between words; HDL-trained models learn \textit{causal dependencies} between system components. For engineering reasoning, where causality is paramount, the latter provides a superior foundation.
 
