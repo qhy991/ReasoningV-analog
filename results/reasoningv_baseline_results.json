@@ -1,0 +1,101 @@
+{
+  "baseline_results": {
+    "LDO": {
+      "task_name": "LDO",
+      "total_questions": 50,
+      "correct": 23,
+      "accuracy": 46.0,
+      "avg_time": 0.3116868448257446,
+      "prompt_template": "Question: {question}\n\nOptions:\n{options}\n\nAnswer:",
+      "parameters": {
+        "max_new_tokens": 3,
+        "temperature": 0.1,
+        "do_sample": true,
+        "top_p": 0.9,
+        "top_k": 10
+      }
+    },
+    "Comparator": {
+      "task_name": "Comparator",
+      "total_questions": 25,
+      "correct": 15,
+      "accuracy": 60.0,
+      "avg_time": 0.3294833564758301,
+      "prompt_template": "Question: {question}\n\nOptions:\n{options}\n\nAnswer:",
+      "parameters": {
+        "max_new_tokens": 3,
+        "temperature": 0.1,
+        "do_sample": true,
+        "top_p": 0.9,
+        "top_k": 10
+      }
+    },
+    "Bandgap": {
+      "task_name": "Bandgap",
+      "total_questions": 50,
+      "correct": 29,
+      "accuracy": 58.0,
+      "avg_time": 0.2818364763259888,
+      "prompt_template": "Question: {question}\n\nOptions:\n{options}\n\nAnswer:",
+      "parameters": {
+        "max_new_tokens": 3,
+        "temperature": 0.1,
+        "do_sample": true,
+        "top_p": 0.9,
+        "top_k": 10
+      }
+    },
+    "TQA": {
+      "task_name": "TQA",
+      "total_questions": 1257,
+      "correct": 1069,
+      "accuracy": 85.0,
+      "avg_time": 0.10384660916567418,
+      "prompt_template": "Question: {question}\n\nOptions:\n{options}\n\nAnswer:",
+      "parameters": {
+        "max_new_tokens": 3,
+        "temperature": 0.1,
+        "do_sample": true,
+        "top_p": 0.9,
+        "top_k": 10
+      }
+    },
+    "Caption": {
+      "task_name": "Caption",
+      "total_questions": 83,
+      "correct": 27,
+      "accuracy": 32.5,
+      "avg_time": 0.17457501285047416,
+      "prompt_template": "Question: {question}\n\nOptions:\n{options}\n\nAnswer:",
+      "parameters": {
+        "max_new_tokens": 3,
+        "temperature": 0.1,
+        "do_sample": true,
+        "top_p": 0.9,
+        "top_k": 10
+      }
+    },
+    "Opamp": {
+      "task_name": "Opamp",
+      "total_questions": 12,
+      "correct": 4,
+      "accuracy": 33.3,
+      "avg_time": 0.07541513442993164,
+      "prompt_template": "Question: {question}\n\nOptions:\n{options}\n\nAnswer:",
+      "parameters": {
+        "max_new_tokens": 3,
+        "temperature": 0.1,
+        "do_sample": true,
+        "top_p": 0.9,
+        "top_k": 10
+      }
+    }
+  },
+  "summary": {
+    "total_questions": 1477,
+    "total_correct": 1167,
+    "overall_accuracy": 79.01,
+    "timestamp": "2025-11-06 (baseline before optimization)",
+    "note": "This is the baseline performance before any optimization. All tasks used the same standard prompt template and parameters."
+  }
+}
