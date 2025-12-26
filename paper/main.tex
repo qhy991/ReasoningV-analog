@@ -552,6 +552,14 @@ Our results illuminate a fundamental trade-off in LLM engineering: \textbf{Param
 
 \textbf{ReasoningV} exemplifies the contextual approach: general reasoning capabilities remain flexible, readily shaped by prompts at inference time. This yields lower baseline performance but superior \textit{plasticity}---the model can rapidly adapt to new problem structures via few-shot examples and strategy prefixes.
 
+We term this the \textbf{Knowledge Filler vs. Knowledge Modifier} dichotomy:
+\begin{itemize}
+    \item For \textit{knowledge-deficient} models (ReasoningV), prompts act as \textbf{knowledge fillers} that bridge domain gaps---few-shot examples become the primary knowledge source, and expert roles activate latent general knowledge.
+    \item For \textit{knowledge-rich} fine-tuned models (AnalogSeeker), prompts become \textbf{knowledge modifiers} that may interfere with established parameter manifolds, potentially causing degradation.
+\end{itemize}
+
+This framework explains why our optimization yields +7.65\% for ReasoningV but 0\% for AnalogSeeker: the 7B model's knowledge gaps create room for prompt-based improvement, while the 32B fine-tuned model's saturated knowledge manifold resists modification.
+
 For engineering applications, where problems are inherently dynamic and specifications evolve, we argue that \textbf{contextual reasoning offers a strategic advantage}. A model that can adapt to novel circuit topologies or updated design rules via prompt modification is more valuable than one frozen at a training-time knowledge snapshot. Our results suggest that investing in sophisticated inference strategies may yield better returns than expensive fine-tuning cycles.
 
 \subsection{Does Digital Logic Transfer to Analog Physics?}
@@ -574,7 +582,15 @@ Our results empirically validate this hypothesis: ReasoningV (HDL-trained) signi
 The efficiency advantage of our approach is substantial when compared to domain-specific fine-tuning. Developing the AnalogSeeker model required a complex multi-agent distillation framework to generate \textbf{112.65 million tokens} of labeled fine-tuning data from raw textbooks \cite{analogseeker}. Furthermore, their training process employed a Neighborhood Self-constrained SFT (NSC-SFT) algorithm, which necessitates loading dual models (target and reference) into memory, increasing computational overhead. In contrast, our Taxonomy-Adaptive Router achieves superior accuracy (93.32\% vs. 85.04\%) with \textbf{zero additional training data preparation} and \textbf{zero GPU training hours}, demonstrating that context activation is a far more resource-efficient pathway for engineering reasoning tasks.
 
 \subsection{Limitations and Future Work}
-While our approach demonstrates strong performance, it relies on careful prompt design and error analysis. Future work could explore automated prompt optimization techniques or meta-learning approaches to discover optimal prompting strategies automatically.
+While our approach demonstrates strong performance, several limitations warrant discussion.
+
+\textbf{Router Classification Accuracy.} Our Taxonomy-Adaptive Router achieves 85.50\% classification accuracy on a validation set of 200 questions. The primary source of error is \textit{calculation-type questions}, where 83.3\% (20/24) are misclassified as factual or reasoning types. This suggests that keyword-based matching struggles with questions containing numerical values or formulas. Future work could enhance calculation detection through regex patterns for numbers/equations or incorporate lightweight semantic embeddings (e.g., sentence-transformers) for improved robustness.
+
+\textbf{Model Scale Dependency.} Our framework's effectiveness is inversely correlated with model scale and domain specialization. The 7B ReasoningV benefits substantially from prompts (+7.65\%), while the 32B AnalogSeeker shows no improvement (0\%). This suggests that practitioners with smaller models stand to gain more from inference-time optimization, while those with large fine-tuned models should exercise caution---aggressive prompting may degrade performance.
+
+\textbf{Task-Specific Example Counts.} Optimal few-shot example counts vary by task: LDO requires 3 examples, Comparator requires 2, and Caption requires 8. Automating this hyperparameter selection through meta-learning or Bayesian optimization remains an open challenge.
+
+Future work could explore automated prompt optimization techniques, multi-strategy fusion for ambiguous questions, or hybrid architectures that combine the knowledge richness of fine-tuning with the plasticity of general reasoning models.
 
 \section{Conclusion}
 We presented a methodology for adapting a general reasoning LLM to the specialized domain of analog circuit design using only inference-time strategies. Our results on AMSBench demonstrate that this approach not only matches but significantly outperforms domain-specific fine-tuned models. Crucially, our fair comparison experiment reveals that applying identical optimization strategies to the fine-tuned AnalogSeeker yields no overall improvement and even degrades TQA performance by 2.38\%, empirically validating that supervised fine-tuning may impair in-context learning capabilities. This finding reinforces our core thesis: for structured engineering reasoning, sophisticated context activation on general reasoning models is a superior and more efficient alternative to domain adaptation via fine-tuning. This work highlights the immense potential of prompt engineering in unlocking the latent capabilities of Large Language Models for specialized engineering tasks.
