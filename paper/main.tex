@@ -285,11 +285,52 @@ Our method outperformed the fine-tuned baseline in 5 out of 6 tasks. Notably, th
 
 \textbf{Difficulty-Stratified Analysis (TQA):} Our multi-strategy optimization demonstrates remarkable effectiveness across all difficulty tiers (see Table \ref{tab:tqa_difficulty}). The \textbf{Graduate-level questions achieved 96.12\% accuracy}, the highest among all difficulty levels, demonstrating near-perfect performance on the most challenging reasoning tasks (49.2\% of dataset). Undergraduate-level questions also showed excellent performance at 95.06\%. Most impressively, Unknown-level questions improved dramatically from $\sim$53.0\% to 78.0\% (\textbf{+25.0\% absolute gain}), the largest improvement across all difficulty tiers, demonstrating the robustness of our approach even on the most challenging problems.
 
-\textbf{Router Mechanism Effectiveness:} The Taxonomy-Adaptive Strategy Router successfully identified and applied specialized strategies to 104 out of 1,257 TQA questions. Among the 188 baseline errors, the router-selected strategies corrected 116 errors, achieving a \textbf{61.7\% error correction rate}. This validates the effectiveness of automated strategy selection based on question taxonomy.
+\textbf{Router Mechanism Effectiveness:} The Taxonomy-Adaptive Strategy Router successfully identified and applied specialized strategies to 104 out of 1,257 TQA questions. Among the 188 baseline errors, the router-selected strategies corrected 116 errors, achieving a \textbf{61.7\% error correction rate}. Table \ref{tab:router_confusion} presents the router classification confusion matrix on a 200-question validation set, revealing that \textit{calculation-type questions} are most prone to misclassification (83.3\% error rate), primarily confused with factual and reasoning categories.
+
+\begin{table}[htbp]
+\caption{Router Classification Confusion Matrix (200 questions)}
+\begin{center}
+\begin{tabular}{l|ccccc}
+\toprule
+\textbf{True$\backslash$Pred} & \textbf{Fact.} & \textbf{Reas.} & \textbf{Calc.} & \textbf{Anal.} & \textbf{Comp.} \\
+\midrule
+Factual & \textbf{95} & 6 & 0 & 3 & 0 \\
+Reasoning & 0 & \textbf{69} & 0 & 0 & 0 \\
+Calculation & 8 & 12 & \textbf{4} & 0 & 0 \\
+Analysis & 0 & 0 & 0 & \textbf{2} & 0 \\
+Comparison & 0 & 0 & 0 & 0 & \textbf{1} \\
+\bottomrule
+\multicolumn{6}{l}{\footnotesize Overall accuracy: 85.50\% (171/200). Calculation→Reasoning: 12 errors.}
+\end{tabular}
+\label{tab:router_confusion}
+\end{center}
+\end{table}
 
 \textbf{Circuit Analysis Tasks:} The Bandgap and Opamp tasks showed particularly strong gains (+12.0\% and +25.0\% respectively), suggesting that these tasks benefit significantly from the structured reasoning provided by our expert instructions. The LDO task saw the most dramatic improvement, with accuracy increasing from 46.0\% to 81.6\% (+77.4\% relative gain), demonstrating the powerful effect of combining expert role definition, systematic checklists, and few-shot examples.
 
 \textbf{Caption Task Bias Correction:} The Caption task revealed an interesting finding: baseline performance suffered from severe option bias, with option D selected only 8\% of the time. Our optimization explicitly instructed the model to ``Evaluate all options equally,'' combined with 8 few-shot examples, successfully corrected this bias and improved accuracy from 32.5\% to 61.27\% (+88.5\% relative gain).
+
+\textbf{Two-Phase Optimization Process:} Our optimization followed a systematic two-phase approach (Table \ref{tab:two_phase}). Phase 1 focused on prompt engineering and parameter optimization, achieving modest gains (+2.37\% overall). Phase 2 introduced few-shot learning and multi-strategy routing, yielding substantial improvements (+5.28\% additional). This demonstrates that while basic optimizations provide a foundation, \textit{few-shot learning is the primary driver of performance gains}.
+
+\begin{table}[htbp]
+\caption{Two-Phase Optimization History}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Task} & \textbf{Baseline} & \textbf{Phase 1} & \textbf{Phase 2} & \textbf{Total $\Delta$} \\
+\midrule
+LDO & 46.0\% & 60.0\% & \textbf{81.6\%} & +35.6\% \\
+Comparator & 60.0\% & 72.0\% & \textbf{76.0\%} & +16.0\% \\
+TQA & 85.0\% & 85.04\% & \textbf{93.32\%} & +8.32\% \\
+Caption & 32.5\% & 51.8\% & \textbf{61.27\%} & +28.77\% \\
+\midrule
+\textbf{Overall} & \textbf{79.01\%} & \textbf{81.38\%} & \textbf{86.66\%} & \textbf{+7.65\%} \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize Phase 1: Prompt + Parameter. Phase 2: Few-shot + Router.}
+\end{tabular}
+\label{tab:two_phase}
+\end{center}
+\end{table}
 
 \subsection{Ablation Study}
 
